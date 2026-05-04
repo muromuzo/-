@@ -18,6 +18,11 @@ export type RevenueChannel = {
   revenue: number;
 };
 
+export type SavingsItem = {
+  name: string;
+  value: number;
+};
+
 export type ReportRecord = {
   id: string;
   brand_name: string;
@@ -38,4 +43,5 @@ export type ReportRecord = {
   created_at: string;
   marketing_items: MarketingItem[];
   revenue_channels: RevenueChannel[];
+  savings_items: SavingsItem[];
 };

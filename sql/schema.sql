@@ -44,3 +44,20 @@ create table if not exists public.revenue_channels (
   revenue bigint not null default 0,
   created_at timestamptz not null default now()
 );
+
+create table if not exists public.savings_items (
+  id uuid primary key default gen_random_uuid(),
+  report_id uuid not null references public.monthly_reports(id) on delete cascade,
+  name text not null,
+  value bigint not null default 0,
+  created_at timestamptz not null default now()
+);
+
+-- If you already ran the old schema, execute the statement below once in Supabase SQL Editor.
+-- create table if not exists public.savings_items (
+--   id uuid primary key default gen_random_uuid(),
+--   report_id uuid not null references public.monthly_reports(id) on delete cascade,
+--   name text not null,
+--   value bigint not null default 0,
+--   created_at timestamptz not null default now()
+-- );

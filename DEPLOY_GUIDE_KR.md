@@ -1,96 +1,47 @@
-# PO LABS 월별 성과 템플릿 - 실전 적용 가이드
+# PO LABS 월별 리포팅 템플릿 배포 가이드
 
-## 포함 기능
-- 회원가입 / 로그인
-- 관리자 권한 부여
-- 최고 마스터 계정 자동 생성
-- 브랜드/병원별 월간 성과 입력
-- 수수료율 직접 수정
-- 총매출에서 매출할인/매출제외 금액 차감
-- 마케팅비 항목 자유 입력
-- 유입채널별 매출 자유 입력
-- PDF 보고서 출력 페이지 제공
+## 1) 소스 업로드
+압축을 해제한 뒤 GitHub 저장소에 업로드하고, Vercel에서 Import 합니다.
 
-## 최고 마스터 계정
-- 아이디: polabs
-- 비밀번호: vldhfoqtm1!
+## 2) Vercel 환경변수
+아래 값을 프로젝트 Settings > Environment Variables 에 추가하세요.
 
-> 실제 운영 전 최초 로그인 후 비밀번호를 변경하는 것을 권장합니다.
+```env
+NEXT_PUBLIC_APP_NAME=PO LABS Monthly Reporting
+SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_xxxxx
+AUTH_SECRET=change-this-to-a-long-random-secret
+MASTER_USERNAME=polabs
+MASTER_PASSWORD=vldhfoqtm1!
+MASTER_DISPLAY_NAME=PO LABS MASTER
+```
 
----
+## 3) Supabase SQL 실행
+`sql/schema.sql` 내용을 Supabase SQL Editor에서 실행하세요.
 
-## 1. Supabase 준비
-1) https://supabase.com 접속 후 새 프로젝트 생성
-2) SQL Editor 열기
-3) 프로젝트의 `sql/schema.sql` 내용을 그대로 실행
-4) Project Settings > API 에서 아래 값 복사
-   - SUPABASE_URL
-   - SUPABASE_SERVICE_ROLE_KEY
+### 이미 예전 스키마를 실행한 경우
+이번 버전부터 `savings_items` 테이블이 추가되었습니다. 기존 프로젝트라면 아래 SQL만 별도로 1회 실행해도 됩니다.
 
----
+```sql
+create table if not exists public.savings_items (
+  id uuid primary key default gen_random_uuid(),
+  report_id uuid not null references public.monthly_reports(id) on delete cascade,
+  name text not null,
+  value bigint not null default 0,
+  created_at timestamptz not null default now()
+);
+```
 
-## 2. Vercel 배포 준비
-1) ZIP 압축 해제
-2) GitHub 새 저장소 생성
-3) 압축 해제한 프로젝트 파일 전체 업로드
-4) Vercel에서 해당 GitHub 저장소 Import
+## 4) Redeploy
+환경변수를 저장했거나 SQL을 추가한 뒤에는 Vercel에서 Redeploy 하세요.
 
----
+## 5) 로그인
+최초 배포 후 아래 마스터 계정으로 로그인한 뒤 비밀번호를 즉시 변경하세요.
+- ID: `polabs`
+- PW: `vldhfoqtm1!`
 
-## 3. Vercel 환경변수 등록
-Vercel Project Settings > Environment Variables 에 아래 값 입력
-
-- NEXT_PUBLIC_APP_NAME = PO LABS Monthly Reporting
-- SUPABASE_URL = (Supabase URL)
-- SUPABASE_SERVICE_ROLE_KEY = (Supabase Service Role Key)
-- AUTH_SECRET = 충분히 긴 랜덤 문자열
-- MASTER_USERNAME = polabs
-- MASTER_PASSWORD = vldhfoqtm1!
-- MASTER_DISPLAY_NAME = PO LABS MASTER
-
----
-
-## 4. 배포 후 첫 실행
-1) 배포 URL 접속
-2) 최초 접속 시 master 계정 자동 생성 시도
-3) 아래 계정으로 로그인
-   - polabs / vldhfoqtm1!
-4) 관리자 페이지에서 다른 직원 계정 권한(admin/user) 부여
-
----
-
-## 5. 사용 흐름
-1) 회원가입 또는 관리자 계정 생성
-2) 대시보드에서
-   - 병원명/브랜드명
-   - 기준 월
-   - 총매출
-   - 매출할인/제외 금액
-   - 기준매출
-   - 수수료율
-   - 마케팅비 항목
-   - 유입채널별 매출
-   - 운영 메모
-   입력
-3) 저장
-4) 카드에서 PDF 버튼 클릭
-5) 인쇄 화면에서 브라우저의 'PDF로 저장' 사용
-6) 병원/거래처별 보고서 전달
-
----
-
-## 6. 추천 운영 방식
-- 직원: user 또는 admin 계정 사용
-- 대표/최고관리자: master 계정 유지
-- 병원별 월간 보고는 브랜드명 + 월 기준으로 입력
-- PDF는 병원 전달용, 대시보드는 내부 관리용으로 사용
-
----
-
-## 7. 실전 적용 후 바로 추가하면 좋은 기능
-- 병원별 필터
-- 전월 대비 자동 비교 그래프
-- 조직/팀 단위 권한 분리
-- 이메일 자동 발송
-- 담당자별 거래처 구분
-- 업종별 템플릿 프리셋
+## 이번 버전 추가 기능
+- 월 마케팅비 절감 내역 입력 섹션 추가
+- 항목 / 금액 공란 행 추가 가능
+- 월별 카드에 절감 합계 표시
+- PDF 보고서에도 절감 내역 자동 삽입

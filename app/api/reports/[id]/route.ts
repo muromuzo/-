@@ -48,9 +48,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     await supabase.from('marketing_items').delete().eq('report_id', id);
     await supabase.from('revenue_channels').delete().eq('report_id', id);
+    await supabase.from('savings_items').delete().eq('report_id', id);
 
     if (payload.marketingItems.length) {
       await supabase.from('marketing_items').insert(payload.marketingItems.map((item: { name: string; value: number }) => ({ report_id: id, name: item.name, value: item.value })));
+    }
+    if (payload.savingsItems.length) {
+      await supabase.from('savings_items').insert(payload.savingsItems.map((item: { name: string; value: number }) => ({ report_id: id, name: item.name, value: item.value })));
     }
     if (payload.channels.length) {
       await supabase.from('revenue_channels').insert(payload.channels.map((item: { name: string; revenue: number }) => ({ report_id: id, name: item.name, revenue: item.revenue })));
@@ -74,6 +78,7 @@ export async function DELETE(_: Request, { params }: { params: Promise<{ id: str
     const supabase = getAdminClient();
     await supabase.from('marketing_items').delete().eq('report_id', id);
     await supabase.from('revenue_channels').delete().eq('report_id', id);
+    await supabase.from('savings_items').delete().eq('report_id', id);
     await supabase.from('monthly_reports').delete().eq('id', id);
     return NextResponse.json({ ok: true });
   } catch {

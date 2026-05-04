@@ -20,6 +20,8 @@ export default async function PrintReportPage({ params }: { params: Promise<{ id
 
   const topMarketing = [...(report.marketing_items || [])].sort((a, b) => b.value - a.value);
   const topChannels = [...(report.revenue_channels || [])].sort((a, b) => b.revenue - a.revenue);
+  const topSavings = [...(report.savings_items || [])].sort((a, b) => b.value - a.value);
+  const savingsTotal = (report.savings_items || []).reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="print-page">
@@ -50,6 +52,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ id
               <div className="meta-item"><span>증가율</span><strong>{percent(report.growth_rate)}</strong></div>
               <div className="meta-item"><span>공급가 기준 상승매출</span><strong>{won(report.supply_increase)}</strong></div>
               <div className="meta-item"><span>수수료율</span><strong>{percent(report.fee_rate)}</strong></div>
+              <div className="meta-item"><span>월 마케팅비 절감 합계</span><strong>{won(savingsTotal)}</strong></div>
             </div>
           </div>
           <div className="subcard">
@@ -82,6 +85,26 @@ export default async function PrintReportPage({ params }: { params: Promise<{ id
               </table>
             </div>
           </div>
+          <div className="subcard">
+            <h3>월 마케팅비 절감 내역</h3>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr><th>항목</th><th>금액</th></tr>
+                </thead>
+                <tbody>
+                  {topSavings.length ? topSavings.map((item, idx) => (
+                    <tr key={`${item.name}-${idx}`}><td>{item.name}</td><td>{won(item.value)}</td></tr>
+                  )) : (
+                    <tr><td colSpan={2} style={{ textAlign: 'center', color: '#64748b' }}>입력된 절감 항목이 없습니다.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div className="subgrid" style={{ marginTop: 16 }}>
           <div className="subcard">
             <h3>유입채널별 매출</h3>
             <div className="table-wrap">

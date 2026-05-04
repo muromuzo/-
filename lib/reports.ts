@@ -10,7 +10,8 @@ export async function getReports() {
       baseline_revenue, increase_amount, growth_rate, fee_rate, supply_increase,
       fee_amount, manager_note, other_note, status_memo, created_by, created_at,
       marketing_items(name, value),
-      revenue_channels(name, revenue)
+      revenue_channels(name, revenue),
+      savings_items(name, value)
     `)
     .order('created_at', { ascending: false });
 
@@ -27,7 +28,8 @@ export async function getReportById(id: string) {
       baseline_revenue, increase_amount, growth_rate, fee_rate, supply_increase,
       fee_amount, manager_note, other_note, status_memo, created_by, created_at,
       marketing_items(name, value),
-      revenue_channels(name, revenue)
+      revenue_channels(name, revenue),
+      savings_items(name, value)
     `)
     .eq('id', id)
     .single();

@@ -17,6 +17,12 @@ export function normalizeReportPayload(payload: any) {
         .filter((item: { name: string; value: number }) => item.name)
     : [];
 
+  const savingsItems = Array.isArray(payload.savingsItems)
+    ? payload.savingsItems
+        .map((item: InputPair) => ({ name: String(item.name || '').trim(), value: Number(item.value) || 0 }))
+        .filter((item: { name: string; value: number }) => item.name)
+    : [];
+
   const channels = Array.isArray(payload.channels)
     ? payload.channels
         .map((item: InputPair) => ({ name: String(item.name || '').trim(), revenue: Number(item.value ?? item.revenue) || 0 }))
@@ -39,6 +45,7 @@ export function normalizeReportPayload(payload: any) {
     otherNote: String(payload.otherNote || ''),
     statusMemo: String(payload.statusMemo || ''),
     marketingItems,
+    savingsItems,
     channels
   };
 }

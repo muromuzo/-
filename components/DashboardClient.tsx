@@ -20,6 +20,12 @@ const defaultMarketingItems: Pair[] = [
   { name: '메타/인스타 광고', value: 0 }
 ];
 
+const defaultSavingsItems: Pair[] = [
+  { name: '', value: 0 },
+  { name: '', value: 0 },
+  { name: '', value: 0 }
+];
+
 const defaultChannels: Pair[] = [
   { name: '강남언니', value: 0 },
   { name: '미인하이', value: 0 },
@@ -55,6 +61,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
   const [otherNote, setOtherNote] = useState('');
   const [statusMemo, setStatusMemo] = useState('');
   const [marketingItems, setMarketingItems] = useState<Pair[]>(defaultMarketingItems);
+  const [savingsItems, setSavingsItems] = useState<Pair[]>(defaultSavingsItems);
   const [channels, setChannels] = useState<Pair[]>(defaultChannels);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -66,15 +73,17 @@ export default function DashboardClient({ user, initialReports }: Props) {
     const supplyIncrease = increaseAmount > 0 ? increaseAmount / 1.1 : 0;
     const feeAmount = supplyIncrease * (feeRate / 100);
     const marketingTotal = marketingItems.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+    const savingsTotal = savingsItems.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
     return {
       adjustedRevenue,
       increaseAmount,
       growthRate,
       supplyIncrease,
       feeAmount,
-      marketingTotal
+      marketingTotal,
+      savingsTotal
     };
-  }, [grossRevenue, revenueDeduction, baselineRevenue, feeRate, marketingItems]);
+  }, [grossRevenue, revenueDeduction, baselineRevenue, feeRate, marketingItems, savingsItems]);
 
   function updatePair(list: Pair[], index: number, key: 'name' | 'value', next: string) {
     const copied = [...list];
@@ -97,6 +106,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
     setOtherNote('');
     setStatusMemo('');
     setMarketingItems(defaultMarketingItems);
+    setSavingsItems(defaultSavingsItems);
     setChannels(defaultChannels);
     setError('');
   }
@@ -112,8 +122,9 @@ export default function DashboardClient({ user, initialReports }: Props) {
     setManagerNote(report.manager_note || '');
     setOtherNote(report.other_note || '');
     setStatusMemo(report.status_memo || '');
-    setMarketingItems(toInputArray(report.marketing_items));
-    setChannels(toInputArray(report.revenue_channels));
+    setMarketingItems(toInputArray(report.marketing_items).length ? toInputArray(report.marketing_items) : defaultMarketingItems);
+    setSavingsItems(toInputArray(report.savings_items).length ? toInputArray(report.savings_items) : defaultSavingsItems);
+    setChannels(toInputArray(report.revenue_channels).length ? toInputArray(report.revenue_channels) : defaultChannels);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -132,6 +143,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
         otherNote,
         statusMemo,
         marketingItems: marketingItems.filter((item) => item.name.trim()),
+        savingsItems: savingsItems.filter((item) => item.name.trim()),
         channels: channels.filter((item) => item.name.trim())
       };
 
@@ -254,6 +266,29 @@ export default function DashboardClient({ user, initialReports }: Props) {
           </div>
 
           <div className="section-title">
+            <h3>월 마케팅비 절감 내역</h3>
+            <button className="btn btn-light" type="button" onClick={() => setSavingsItems([...savingsItems, { name: '', value: 0 }])}>항목 추가</button>
+          </div>
+          <p className="desc" style={{ marginTop: -4, marginBottom: 10 }}>
+            우리를 통해 절감한 항목과 금액을 자유롭게 추가하세요. 입력한 내용은 PDF 보고서에도 자동 반영됩니다.
+          </p>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr><th>항목</th><th>금액</th></tr>
+              </thead>
+              <tbody>
+                {savingsItems.map((item, index) => (
+                  <tr key={`s-${index}`}>
+                    <td><input value={item.name} onChange={(e) => setSavingsItems(updatePair(savingsItems, index, 'name', e.target.value))} placeholder="예: 외부마케팅 대행비 절감" /></td>
+                    <td><input type="number" value={item.value || ''} onChange={(e) => setSavingsItems(updatePair(savingsItems, index, 'value', e.target.value))} placeholder="예: 10550000" /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="section-title">
             <h3>유입채널별 매출</h3>
             <button className="btn btn-light" type="button" onClick={() => setChannels([...channels, { name: '', value: 0 }])}>채널 추가</button>
           </div>
@@ -296,6 +331,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
             <div className="stat"><div className="label">상승매출</div><div className="value green">{won(calculated.increaseAmount)}</div><small>정산대상 매출 - 기준매출</small></div>
             <div className="stat"><div className="label">증가율</div><div className="value green">{percent(calculated.growthRate)}</div><small>상승매출 ÷ 기준매출</small></div>
             <div className="stat"><div className="label">전체 마케팅비</div><div className="value red">{won(calculated.marketingTotal)}</div><small>입력한 모든 마케팅비 항목 합계</small></div>
+            <div className="stat"><div className="label">절감 합계</div><div className="value blue">{won(calculated.savingsTotal)}</div><small>월 마케팅비 절감 내역 합계</small></div>
             <div className="stat"><div className="label">공급가 기준 상승매출</div><div className="value amber">{won(Math.round(calculated.supplyIncrease))}</div><small>상승매출 ÷ 1.1</small></div>
             <div className="stat"><div className="label">수수료율</div><div className="value pink">{percent(feeRate)}</div><small>월별 수정 가능</small></div>
             <div className="stat wide"><div className="label">수수료 자동계산</div><div className="value pink">{won(Math.round(calculated.feeAmount))}</div><small>(상승매출 ÷ 1.1) × 수수료율</small></div>
@@ -314,6 +350,8 @@ export default function DashboardClient({ user, initialReports }: Props) {
         <div className="card-list">
           {reports.map((report) => {
             const marketingTop = [...(report.marketing_items || [])].sort((a, b) => b.value - a.value).slice(0, 5);
+            const savingsTop = [...(report.savings_items || [])].sort((a, b) => b.value - a.value).slice(0, 5);
+            const savingsTotal = (report.savings_items || []).reduce((sum, item) => sum + item.value, 0);
             const channelTop = [...(report.revenue_channels || [])].sort((a, b) => b.revenue - a.revenue).slice(0, 5);
 
             return (
@@ -326,6 +364,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
                       <span className="badge badge-blue">정산대상 매출 {won(report.adjusted_revenue)}</span>
                       <span className="badge badge-green">증가율 {percent(report.growth_rate)}</span>
                       <span className="badge badge-red">마케팅비 {won(report.marketing_items.reduce((sum, item) => sum + item.value, 0))}</span>
+                      <span className="badge badge-blue">절감액 {won(savingsTotal)}</span>
                       <span className="badge badge-pink">수수료 {won(report.fee_amount)}</span>
                       <span className="badge badge-amber">수수료율 {percent(report.fee_rate)}</span>
                     </div>
@@ -342,7 +381,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
                     <div className="kpi"><div className="kpi-label">매출제외</div><div className="kpi-value red">{won(report.revenue_deduction)}</div></div>
                     <div className="kpi"><div className="kpi-label">기준매출</div><div className="kpi-value">{won(report.baseline_revenue)}</div></div>
                     <div className="kpi"><div className="kpi-label">상승매출</div><div className="kpi-value green">{won(report.increase_amount)}</div></div>
-                    <div className="kpi"><div className="kpi-label">공급가 상승매출</div><div className="kpi-value amber">{won(report.supply_increase)}</div></div>
+                    <div className="kpi"><div className="kpi-label">절감합계</div><div className="kpi-value blue">{won(savingsTotal)}</div></div>
                     <div className="kpi"><div className="kpi-label">수수료</div><div className="kpi-value pink">{won(report.fee_amount)}</div></div>
                   </div>
 
@@ -356,6 +395,17 @@ export default function DashboardClient({ user, initialReports }: Props) {
                       </div>
                     </div>
                     <div className="subcard">
+                      <h4>월 마케팅비 절감 내역</h4>
+                      <div className="meta-list">
+                        {savingsTop.length ? savingsTop.map((item, idx) => (
+                          <div className="meta-item" key={`${item.name}-${idx}`}><span>{item.name}</span><strong>{won(item.value)}</strong></div>
+                        )) : <div className="muted">입력된 절감 항목이 없습니다.</div>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="subgrid" style={{ marginTop: 16 }}>
+                    <div className="subcard">
                       <h4>상위 유입채널</h4>
                       <div className="meta-list">
                         {channelTop.length ? channelTop.map((item, idx) => (
@@ -363,15 +413,15 @@ export default function DashboardClient({ user, initialReports }: Props) {
                         )) : <div className="muted">입력된 채널이 없습니다.</div>}
                       </div>
                     </div>
-                  </div>
-
-                  <div className="subgrid" style={{ marginTop: 16 }}>
                     <div className="subcard">
                       <h4>진행상태 요약</h4>
                       <div className="desc" style={{ whiteSpace: 'pre-line' }}>{report.manager_note || '-'}</div>
                       <hr style={{ border: 0, borderTop: '1px solid #e5e7eb', margin: '12px 0' }} />
                       <div className="desc" style={{ whiteSpace: 'pre-line' }}>{report.status_memo || '-'}</div>
                     </div>
+                  </div>
+
+                  <div className="subgrid" style={{ marginTop: 16 }}>
                     <div className="subcard">
                       <h4>기타 메모</h4>
                       <div className="desc" style={{ whiteSpace: 'pre-line' }}>{report.other_note || '-'}</div>
