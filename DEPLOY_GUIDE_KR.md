@@ -45,3 +45,16 @@ create table if not exists public.savings_items (
 - 항목 / 금액 공란 행 추가 가능
 - 월별 카드에 절감 합계 표시
 - PDF 보고서에도 절감 내역 자동 삽입
+
+
+## 이번 추가 반영 사항
+- 로그인 화면 상단에 `POLABS ADMIN` 브랜딩 추가
+- 월별 마케팅 계획서 별도 페이지(`/plans`) 추가
+- 계획 항목 / 비고사항 입력 및 누적 관리 기능 추가
+- PDF 보고서 디자인 고도화
+- 운영 메모 가독성 개선
+- 인쇄 제목을 공백으로 처리하도록 개선
+
+## 기존 운영 프로젝트에 추가로 필요한 SQL
+기존 프로젝트라면 아래 파일도 Supabase SQL Editor에서 1회 실행하세요.
+- `sql/add_plan_tables_migration.sql`

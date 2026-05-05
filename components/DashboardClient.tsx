@@ -244,6 +244,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
         <div className="toolbar mt">
           <div className="badge badge-blue">로그인 사용자: {user.display_name || user.username}</div>
           <div className="badge badge-amber">권한: {user.role}</div>
+          <Link className="btn btn-white" href="/plans">월별 계획서</Link>
           {(user.role === 'admin' || user.role === 'master') && (
             <Link className="btn btn-white" href="/admin/users">회원 / 권한 관리</Link>
           )}

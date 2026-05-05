@@ -37,6 +37,7 @@ export default function AuthForm({ mode }: Props) {
 
   return (
     <div className="auth-card">
+      <div className="auth-brand">POLABS ADMIN</div>
       <div style={{ marginBottom: 18 }}>
         <div className="title-lg" style={{ fontSize: 28 }}>{isLogin ? '로그인' : '회원가입'}</div>
         <div className="desc" style={{ marginTop: 8 }}>

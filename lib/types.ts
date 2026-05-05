@@ -45,3 +45,18 @@ export type ReportRecord = {
   revenue_channels: RevenueChannel[];
   savings_items: SavingsItem[];
 };
+
+export type PlanItem = {
+  title: string;
+  note: string | null;
+};
+
+export type MonthlyPlanRecord = {
+  id: string;
+  brand_name: string;
+  month_label: string;
+  plan_memo: string | null;
+  created_by: string;
+  created_at: string;
+  plan_items: PlanItem[];
+};
