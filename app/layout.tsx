@@ -25,7 +25,7 @@ function normalizeSiteUrl(value?: string) {
 const siteUrl = normalizeSiteUrl(
   process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
 );
-const kakaoOgImagePath = '/polabs-kakao-og-v2.png';
+const kakaoOgImagePath = '/polabs-og-card.png';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
