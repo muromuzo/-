@@ -1,6 +1,5 @@
 import './globals.css';
 import type { Metadata } from 'next';
-import { Suspense } from 'react';
 import { Noto_Sans_KR, Space_Grotesk } from 'next/font/google';
 import InteractiveEffects from '@/components/InteractiveEffects';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
@@ -71,9 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body className={`${bodyFont.variable} ${displayFont.variable}`}>
         <InteractiveEffects />
-        <Suspense fallback={null}>
-          <GlobalLoadingOverlay />
-        </Suspense>
+        <GlobalLoadingOverlay />
         {children}
       </body>
     </html>
