@@ -1,0 +1,81 @@
+import './globals.css';
+import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { Noto_Sans_KR, Space_Grotesk } from 'next/font/google';
+import InteractiveEffects from '@/components/InteractiveEffects';
+import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
+
+const bodyFont = Noto_Sans_KR({
+  subsets: ['latin'],
+  weight: ['400', '500', '700', '900'],
+  variable: '--font-body'
+});
+
+const displayFont = Space_Grotesk({
+  subsets: ['latin'],
+  weight: ['500', '700'],
+  variable: '--font-display'
+});
+
+function normalizeSiteUrl(value?: string) {
+  if (!value) return 'https://example.com';
+  return value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
+}
+
+const siteUrl = normalizeSiteUrl(
+  process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
+);
+const kakaoOgImagePath = '/polabs-kakao-og-v2.png';
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  title: 'POLABS ADMIN',
+  description: '피오랩스 어드민',
+  applicationName: 'POLABS ADMIN',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      'max-snippet': -1,
+      'max-image-preview': 'none',
+      'max-video-preview': -1
+    }
+  },
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/apple-touch-icon.png'
+  },
+  openGraph: {
+    title: 'POLABS ADMIN',
+    description: '피오랩스 어드민',
+    siteName: 'POLABS ADMIN',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [{ url: kakaoOgImagePath, width: 1200, height: 630, alt: 'POLABS ADMIN 공유 이미지' }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'POLABS ADMIN',
+    description: '피오랩스 어드민',
+    images: [kakaoOgImagePath]
+  }
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ko">
+      <body className={`${bodyFont.variable} ${displayFont.variable}`}>
+        <InteractiveEffects />
+        <Suspense fallback={null}>
+          <GlobalLoadingOverlay />
+        </Suspense>
+        {children}
+      </body>
+    </html>
+  );
+}
