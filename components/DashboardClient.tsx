@@ -74,6 +74,9 @@ export default function DashboardClient({ user, initialReports }: Props) {
     const feeAmount = supplyIncrease * (feeRate / 100);
     const marketingTotal = marketingItems.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
     const savingsTotal = savingsItems.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+    const distributableChannelRevenue = Math.max(0, adjustedRevenue - marketingTotal);
+    const assignedChannelRevenue = channels.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+    const remainingChannelRevenue = Math.max(0, distributableChannelRevenue - assignedChannelRevenue);
     return {
       adjustedRevenue,
       increaseAmount,
@@ -81,9 +84,12 @@ export default function DashboardClient({ user, initialReports }: Props) {
       supplyIncrease,
       feeAmount,
       marketingTotal,
-      savingsTotal
+      savingsTotal,
+      distributableChannelRevenue,
+      assignedChannelRevenue,
+      remainingChannelRevenue
     };
-  }, [grossRevenue, revenueDeduction, baselineRevenue, feeRate, marketingItems, savingsItems]);
+  }, [grossRevenue, revenueDeduction, baselineRevenue, feeRate, marketingItems, savingsItems, channels]);
 
   function updatePair(list: Pair[], index: number, key: 'name' | 'value', next: string) {
     const copied = [...list];
@@ -92,6 +98,19 @@ export default function DashboardClient({ user, initialReports }: Props) {
       [key]: key === 'value' ? Number(next) || 0 : next
     } as Pair;
     return copied;
+  }
+
+  function updateChannelValue(index: number, next: string) {
+    const nextValue = Math.max(0, Number(next) || 0);
+    const otherSum = channels.reduce((sum, item, idx) => sum + (idx === index ? 0 : Number(item.value) || 0), 0);
+    const maxAllowed = Math.max(0, calculated.distributableChannelRevenue - otherSum);
+    const appliedValue = Math.min(nextValue, maxAllowed);
+    return updatePair(channels, index, 'value', String(appliedValue));
+  }
+
+  function getChannelRowMax(index: number) {
+    const otherSum = channels.reduce((sum, item, idx) => sum + (idx === index ? 0 : Number(item.value) || 0), 0);
+    return Math.max(0, calculated.distributableChannelRevenue - otherSum);
   }
 
   function resetForm() {
@@ -292,18 +311,41 @@ export default function DashboardClient({ user, initialReports }: Props) {
             <h3>유입채널별 매출</h3>
             <button className="btn btn-light" type="button" onClick={() => setChannels([...channels, { name: '', value: 0 }])}>채널 추가</button>
           </div>
+          <div className="subgrid" style={{ marginBottom: 12 }}>
+            <div className="subcard">
+              <h4>채널 배분 가능 총액</h4>
+              <div className="meta-list">
+                <div className="meta-item"><span>총매출 - 매출제외 - 전체 마케팅비</span><strong>{won(calculated.distributableChannelRevenue)}</strong></div>
+                <div className="meta-item"><span>현재 입력 합계</span><strong>{won(calculated.assignedChannelRevenue)}</strong></div>
+                <div className="meta-item"><span>남은 배분 가능 금액</span><strong>{won(calculated.remainingChannelRevenue)}</strong></div>
+              </div>
+            </div>
+          </div>
           <div className="table-wrap">
             <table>
               <thead>
                 <tr><th>채널명</th><th>매출</th></tr>
               </thead>
               <tbody>
-                {channels.map((item, index) => (
-                  <tr key={`c-${index}`}>
-                    <td><input value={item.name} onChange={(e) => setChannels(updatePair(channels, index, 'name', e.target.value))} /></td>
-                    <td><input type="number" value={item.value || ''} onChange={(e) => setChannels(updatePair(channels, index, 'value', e.target.value))} /></td>
-                  </tr>
-                ))}
+                {channels.map((item, index) => {
+                  const rowMax = getChannelRowMax(index);
+                  return (
+                    <tr key={`c-${index}`}>
+                      <td><input value={item.name} onChange={(e) => setChannels(updatePair(channels, index, 'name', e.target.value))} /></td>
+                      <td>
+                        <input
+                          type="number"
+                          min={0}
+                          max={rowMax}
+                          value={item.value || ''}
+                          placeholder={`최대 ${rowMax.toLocaleString('ko-KR')}`}
+                          onChange={(e) => setChannels(updateChannelValue(index, e.target.value))}
+                        />
+                        <div className="muted small" style={{ marginTop: 6 }}>이 행 최대 입력 가능 금액: {won(rowMax)}</div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -332,6 +374,8 @@ export default function DashboardClient({ user, initialReports }: Props) {
             <div className="stat"><div className="label">증가율</div><div className="value green">{percent(calculated.growthRate)}</div><small>상승매출 ÷ 기준매출</small></div>
             <div className="stat"><div className="label">전체 마케팅비</div><div className="value red">{won(calculated.marketingTotal)}</div><small>입력한 모든 마케팅비 항목 합계</small></div>
             <div className="stat"><div className="label">절감 합계</div><div className="value blue">{won(calculated.savingsTotal)}</div><small>월 마케팅비 절감 내역 합계</small></div>
+            <div className="stat"><div className="label">채널 배분 가능 총액</div><div className="value blue">{won(calculated.distributableChannelRevenue)}</div><small>총매출 - 매출제외 - 전체 마케팅비</small></div>
+            <div className="stat"><div className="label">채널 배분 잔액</div><div className="value amber">{won(calculated.remainingChannelRevenue)}</div><small>유입채널에 아직 배분하지 않은 금액</small></div>
             <div className="stat"><div className="label">공급가 기준 상승매출</div><div className="value amber">{won(Math.round(calculated.supplyIncrease))}</div><small>상승매출 ÷ 1.1</small></div>
             <div className="stat"><div className="label">수수료율</div><div className="value pink">{percent(feeRate)}</div><small>월별 수정 가능</small></div>
             <div className="stat wide"><div className="label">수수료 자동계산</div><div className="value pink">{won(Math.round(calculated.feeAmount))}</div><small>(상승매출 ÷ 1.1) × 수수료율</small></div>
