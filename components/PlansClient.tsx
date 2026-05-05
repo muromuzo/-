@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import AppTabs from '@/components/AppTabs';
 import type { DashboardUser, MonthlyPlanRecord } from '@/lib/types';
@@ -96,7 +97,7 @@ export default function PlansClient({ user, initialPlans }: Props) {
 
   return (
     <div className="container">
-      <AppTabs user={user} active="plans" description="브랜드별 월간 마케팅 계획, 실행 항목, 비고사항을 따로 기록하고 누적 관리합니다." />
+      <AppTabs user={user} active="plans" description="월별 마케팅계획서를 입력하고, 누적 카드와 가독성 높은 PDF 템플릿까지 같은 카테고리에서 관리합니다." />
 
       <div className="grid-2">
         <section className="panel">
@@ -156,6 +157,7 @@ export default function PlansClient({ user, initialPlans }: Props) {
               <div className="meta-item"><span>계획 항목</span><strong>실행할 액션을 짧고 명확하게</strong></div>
               <div className="meta-item"><span>비고사항</span><strong>기간, 우선순위, 담당, 체크포인트 작성</strong></div>
               <div className="meta-item"><span>추가 메모</span><strong>브랜드 특이사항, 요청사항, 예산 메모</strong></div>
+              <div className="meta-item"><span>PDF 템플릿</span><strong>저장 후 카드에서 PDF 버튼으로 바로 인쇄</strong></div>
             </div>
           </div>
         </section>
@@ -164,7 +166,7 @@ export default function PlansClient({ user, initialPlans }: Props) {
       <section className="panel">
         <div className="section-title">
           <h2>월별 계획서 누적 카드</h2>
-          <span className="muted small">최신 입력 순으로 정렬됩니다.</span>
+          <span className="muted small">최신 입력 순으로 정렬되며 PDF 버튼으로 계획서 템플릿을 바로 열 수 있습니다.</span>
         </div>
         {!plans.length && <div className="empty">아직 저장된 계획서가 없습니다.</div>}
         <div className="card-list">
@@ -176,10 +178,12 @@ export default function PlansClient({ user, initialPlans }: Props) {
                   <div className="title-sm">{plan.month_label}</div>
                   <div className="badges">
                     <span className="badge badge-blue">계획 항목 {plan.plan_items?.length || 0}건</span>
+                    <span className="badge badge-green">저장완료</span>
                   </div>
                 </div>
                 <div className="toolbar">
                   <button className="btn btn-light" onClick={() => loadPlan(plan)}>불러오기</button>
+                  <Link className="btn btn-white" href={`/plan/${plan.id}/print`} target="_blank">PDF</Link>
                   <button className="btn btn-danger" onClick={() => handleDelete(plan.id)}>삭제</button>
                 </div>
               </div>

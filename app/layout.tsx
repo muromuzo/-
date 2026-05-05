@@ -14,9 +14,45 @@ const displayFont = Space_Grotesk({
   variable: '--font-display'
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+
 export const metadata: Metadata = {
-  title: 'PO LABS 월별 성과 템플릿',
-  description: '회원가입, 관리자 권한, 월별 보고서, PDF 출력이 가능한 성과 대시보드 템플릿'
+  metadataBase: new URL(siteUrl),
+  title: 'POLABS ADMIN',
+  description: '피오랩스 어드민',
+  applicationName: 'POLABS ADMIN',
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      'max-snippet': -1,
+      'max-image-preview': 'none',
+      'max-video-preview': -1
+    }
+  },
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/apple-touch-icon.png'
+  },
+  openGraph: {
+    title: 'POLABS ADMIN',
+    description: '피오랩스 어드민',
+    siteName: 'POLABS ADMIN',
+    locale: 'ko_KR',
+    type: 'website',
+    images: [{ url: '/polabs-og.png', width: 512, height: 512, alt: 'POLABS 로고' }]
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'POLABS ADMIN',
+    description: '피오랩스 어드민',
+    images: ['/polabs-og.png']
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

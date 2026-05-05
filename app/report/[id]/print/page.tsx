@@ -29,7 +29,7 @@ export default async function PrintReportPage({ params }: { params: Promise<{ id
     <div className="print-page print-page-enhanced">
       <div className="print-shell">
         <div className="hide-print toolbar" style={{ justifyContent: 'space-between', marginBottom: 20 }}>
-          <Link className="btn btn-light" href="/dashboard">대시보드로 돌아가기</Link>
+          <Link className="btn btn-light" href="/reports">성과보고서로 돌아가기</Link>
           <PrintButton />
         </div>
 

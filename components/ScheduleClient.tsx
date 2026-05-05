@@ -28,6 +28,7 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: Props
   const [ownerProId, setOwnerProId] = useState(teamOwnerDefault(user));
   const [monthFilter, setMonthFilter] = useState(todayMonth);
   const [categoryFilter, setCategoryFilter] = useState('전체');
+  const [teamFilter, setTeamFilter] = useState('전체');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -35,11 +36,29 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: Props
     return memos.filter((memo) => {
       const matchesMonth = !monthFilter || memo.scheduled_date.startsWith(monthFilter);
       const matchesCategory = categoryFilter === '전체' || memo.category === categoryFilter;
-      return matchesMonth && matchesCategory;
+      const matchesTeam = user.role !== 'master' || teamFilter === '전체' || memo.owner_pro_id === teamFilter;
+      return matchesMonth && matchesCategory && matchesTeam;
     });
-  }, [memos, monthFilter, categoryFilter]);
+  }, [memos, monthFilter, categoryFilter, teamFilter, user.role]);
 
   const categories = useMemo(() => ['전체', ...new Set(memos.map((memo) => memo.category)), '운영', '광고', '콘텐츠', '정산'], [memos]);
+
+  const groupedMemos = useMemo(() => {
+    const map = new Map<string, ScheduleMemo[]>();
+    visibleMemos.forEach((memo) => {
+      const key = memo.owner_pro_name || '미지정 팀';
+      const bucket = map.get(key) || [];
+      bucket.push(memo);
+      map.set(key, bucket);
+    });
+
+    return Array.from(map.entries())
+      .map(([teamName, teamMemos]) => ({
+        teamName,
+        memos: [...teamMemos].sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date))
+      }))
+      .sort((a, b) => a.teamName.localeCompare(b.teamName, 'ko'));
+  }, [visibleMemos]);
 
   function resetForm() {
     setEditingId(null);
@@ -118,7 +137,7 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: Props
 
   return (
     <div className="container">
-      <AppTabs user={user} active="schedule" description="프로 팀 단위로 공유하는 일정 메모입니다. 대시보드에는 이번 주 일정만, 이 페이지에서는 월간 일정과 카테고리 필터를 제공합니다." />
+      <AppTabs user={user} active="schedule" description="마스터는 프로별 팀 일정을 한 번에 보고, 프로·일반은 자신의 팀 일정과 월간 카테고리 메모를 관리합니다." />
 
       <div className="grid-2">
         <section className="panel">
@@ -161,7 +180,7 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: Props
 
         <section className="panel">
           <h2>월간 필터</h2>
-          <div className="form-grid">
+          <div className={user.role === 'master' ? 'team-filter-row' : 'form-grid'}>
             <div className="field">
               <label>월 선택</label>
               <input type="month" value={monthFilter} onChange={(e) => setMonthFilter(e.target.value)} />
@@ -172,6 +191,17 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: Props
                 {categories.map((item) => <option key={item} value={item}>{item}</option>)}
               </select>
             </div>
+            {user.role === 'master' && (
+              <div className="field">
+                <label>프로 팀</label>
+                <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
+                  <option value="전체">전체 팀</option>
+                  {proOptions.map((pro) => (
+                    <option key={pro.id} value={pro.id}>{pro.display_name || pro.username}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
           <p className="desc" style={{ marginTop: 12 }}>체크 상태를 남기면 월간 일정 진행 여부를 페이지에서 바로 확인할 수 있습니다.</p>
         </section>
@@ -179,34 +209,71 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: Props
 
       <section className="panel">
         <div className="section-title">
-          <h2>월간 일정 메모</h2>
+          <h2>{user.role === 'master' ? '프로별 월간 일정 메모' : '월간 일정 메모'}</h2>
           <span className="muted small">날짜순 정렬 / 팀 단위 공유</span>
         </div>
         {!visibleMemos.length && <div className="empty">조건에 맞는 일정 메모가 없습니다.</div>}
-        <div className="card-list">
-          {visibleMemos.map((memo) => (
-            <article key={memo.id} className="report-card">
-              <div className="report-card-head">
-                <div>
-                  <div className="title-lg" style={{ fontSize: 22 }}>{memo.title}</div>
-                  <div className="title-sm">{new Date(`${memo.scheduled_date}T00:00:00`).toLocaleDateString('ko-KR')} · {memo.category} · 팀 {memo.owner_pro_name}</div>
-                  <div className="badges">
-                    <span className={`badge ${memo.is_checked ? 'badge-green' : 'badge-blue'}`}>{memo.is_checked ? '완료' : '대기'}</span>
-                    <span className="badge badge-amber">작성자 {memo.author_name}</span>
+
+        {user.role === 'master' ? (
+          <div className="team-groups">
+            {groupedMemos.map((group) => (
+              <section className="team-group" key={group.teamName}>
+                <div className="team-group-head">
+                  <h3>{group.teamName}</h3>
+                  <span className="badge badge-blue">{group.memos.length}건</span>
+                </div>
+                <div className="card-list">
+                  {group.memos.map((memo) => (
+                    <article key={memo.id} className="report-card">
+                      <div className="report-card-head">
+                        <div>
+                          <div className="title-lg" style={{ fontSize: 22 }}>{memo.title}</div>
+                          <div className="title-sm">{new Date(`${memo.scheduled_date}T00:00:00`).toLocaleDateString('ko-KR')} · {memo.category} · 작성자 {memo.author_name}</div>
+                          <div className="badges">
+                            <span className={`badge ${memo.is_checked ? 'badge-green' : 'badge-blue'}`}>{memo.is_checked ? '완료' : '대기'}</span>
+                          </div>
+                        </div>
+                        <div className="toolbar">
+                          <button className="btn btn-light" onClick={() => toggleCheck(memo)}>{memo.is_checked ? '체크 해제' : '완료 체크'}</button>
+                          <button className="btn btn-light" onClick={() => loadMemo(memo)}>수정</button>
+                          <button className="btn btn-danger" onClick={() => handleDelete(memo.id)}>삭제</button>
+                        </div>
+                      </div>
+                      <div className="report-card-body">
+                        <div className="desc" style={{ whiteSpace: 'pre-line' }}>{memo.note || '-'}</div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className="card-list">
+            {visibleMemos.map((memo) => (
+              <article key={memo.id} className="report-card">
+                <div className="report-card-head">
+                  <div>
+                    <div className="title-lg" style={{ fontSize: 22 }}>{memo.title}</div>
+                    <div className="title-sm">{new Date(`${memo.scheduled_date}T00:00:00`).toLocaleDateString('ko-KR')} · {memo.category} · 팀 {memo.owner_pro_name}</div>
+                    <div className="badges">
+                      <span className={`badge ${memo.is_checked ? 'badge-green' : 'badge-blue'}`}>{memo.is_checked ? '완료' : '대기'}</span>
+                      <span className="badge badge-amber">작성자 {memo.author_name}</span>
+                    </div>
+                  </div>
+                  <div className="toolbar">
+                    <button className="btn btn-light" onClick={() => toggleCheck(memo)}>{memo.is_checked ? '체크 해제' : '완료 체크'}</button>
+                    <button className="btn btn-light" onClick={() => loadMemo(memo)}>수정</button>
+                    <button className="btn btn-danger" onClick={() => handleDelete(memo.id)}>삭제</button>
                   </div>
                 </div>
-                <div className="toolbar">
-                  <button className="btn btn-light" onClick={() => toggleCheck(memo)}>{memo.is_checked ? '체크 해제' : '완료 체크'}</button>
-                  <button className="btn btn-light" onClick={() => loadMemo(memo)}>수정</button>
-                  <button className="btn btn-danger" onClick={() => handleDelete(memo.id)}>삭제</button>
+                <div className="report-card-body">
+                  <div className="desc" style={{ whiteSpace: 'pre-line' }}>{memo.note || '-'}</div>
                 </div>
-              </div>
-              <div className="report-card-body">
-                <div className="desc" style={{ whiteSpace: 'pre-line' }}>{memo.note || '-'}</div>
-              </div>
-            </article>
-          ))}
-        </div>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

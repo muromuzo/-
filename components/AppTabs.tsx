@@ -10,7 +10,7 @@ const roleLabel: Record<DashboardUser['role'], string> = {
   general: '일반'
 };
 
-type TabKey = 'reports' | 'plans' | 'board' | 'schedule' | 'users';
+type TabKey = 'home' | 'reports' | 'plans' | 'board' | 'schedule' | 'users';
 
 type Props = {
   user: DashboardUser;
@@ -21,7 +21,8 @@ type Props = {
 export default function AppTabs({ user, active, description }: Props) {
   const tabs = useMemo(() => {
     const base = [
-      { key: 'reports', label: '성과보고서', href: '/dashboard' },
+      { key: 'home', label: '대시보드', href: '/dashboard' },
+      { key: 'reports', label: '성과보고서', href: '/reports' },
       { key: 'plans', label: '월별 마케팅계획서', href: '/plans' },
       { key: 'board', label: '사내 게시판', href: '/board' },
       { key: 'schedule', label: '일정 메모', href: '/schedule' }
