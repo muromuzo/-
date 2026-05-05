@@ -4,6 +4,7 @@ create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
   username text not null unique,
   display_name text,
+  contact_name text,
   password_hash text not null,
   role text not null default 'general' check (role in ('master', 'pro', 'general')),
   approval_status text not null default 'approved' check (approval_status in ('pending', 'approved', 'rejected')),

@@ -20,7 +20,7 @@ export async function getBoardPosts(limit?: number) {
   if (userIds.length) {
     const { data: users } = await supabase
       .from('users')
-      .select('id, username, display_name, role, approval_status, manager_user_id, approved_at, created_at')
+      .select('id, username, display_name, contact_name, role, approval_status, manager_user_id, approved_at, created_at')
       .in('id', userIds);
 
     for (const user of (users ?? []) as DashboardUser[]) {
@@ -32,7 +32,7 @@ export async function getBoardPosts(limit?: number) {
     const author = userMap.get(post.created_by);
     return {
       ...post,
-      author_name: author?.display_name || author?.username || '알 수 없음',
+      author_name: author?.display_name || author?.contact_name || author?.username || '알 수 없음',
       author_role: author?.role || 'general'
     } satisfies BoardPost;
   });

@@ -442,6 +442,13 @@ tr:last-child td { border-bottom: 0; }
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
 }
+.password-inline {
+  min-width: 240px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
 
 .print-shell { max-width: 1120px; margin: 0 auto; padding: 24px; }
 .print-page {
@@ -574,7 +581,7 @@ tr:last-child td { border-bottom: 0; }
   .stat .value, .kpi-value, .print-box-value, .mini-stat-value { font-size: 22px; }
   .auth-brand { font-size: 28px; }
   .print-main-title { font-size: 30px; }
-  .plan-print-item { grid-template-columns: 1fr; }
+  .plan-print-item, .password-inline { grid-template-columns: 1fr; }
 }
 @page {
   size: A4;

@@ -8,6 +8,7 @@ type Props = { mode: 'login' | 'signup' };
 export default function AuthForm({ mode }: Props) {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [contactName, setContactName] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +26,7 @@ export default function AuthForm({ mode }: Props) {
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, displayName })
+        body: JSON.stringify({ username, password, displayName, contactName })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '처리 중 오류가 발생했습니다.');
@@ -38,6 +39,7 @@ export default function AuthForm({ mode }: Props) {
       setSuccess('가입 요청이 접수되었습니다. 마스터 승인 후 로그인할 수 있습니다.');
       setUsername('');
       setDisplayName('');
+      setContactName('');
       setPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
@@ -65,10 +67,16 @@ export default function AuthForm({ mode }: Props) {
         </div>
 
         {!isLogin && (
-          <div className="field" style={{ marginBottom: 14 }}>
-            <label>표시 이름</label>
-            <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="예: PO LABS 운영팀" />
-          </div>
+          <>
+            <div className="field" style={{ marginBottom: 14 }}>
+              <label>표시 이름 / 소속명</label>
+              <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="예: PO LABS 운영팀" />
+            </div>
+            <div className="field" style={{ marginBottom: 14 }}>
+              <label>담당자 이름</label>
+              <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="예: 홍길동" required />
+            </div>
+          </>
         )}
 
         <div className="field" style={{ marginBottom: 14 }}>

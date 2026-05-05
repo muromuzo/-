@@ -68,7 +68,7 @@ export async function getCurrentUser(): Promise<DashboardUser | null> {
   const supabase = getAdminClient();
   const { data } = await supabase
     .from('users')
-    .select('id, username, display_name, role, approval_status, manager_user_id, approved_at, created_at')
+    .select('id, username, display_name, contact_name, role, approval_status, manager_user_id, approved_at, created_at')
     .eq('id', payload.userId)
     .maybeSingle();
   return (data as DashboardUser | null) ?? null;

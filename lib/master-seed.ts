@@ -28,7 +28,7 @@ export async function ensureMasterUser() {
     ) {
       await supabase
         .from('users')
-        .update({ role: 'master', approval_status: 'approved', manager_user_id: null })
+        .update({ role: 'master', approval_status: 'approved', manager_user_id: null, contact_name: displayName })
         .eq('id', existing.id);
     }
 
@@ -42,6 +42,7 @@ export async function ensureMasterUser() {
     .insert({
       username: masterUsername,
       display_name: displayName,
+      contact_name: displayName,
       password_hash: passwordHash,
       role: 'master',
       approval_status: 'approved',

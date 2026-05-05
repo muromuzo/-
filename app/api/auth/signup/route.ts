@@ -8,10 +8,10 @@ export const runtime = 'nodejs';
 export async function POST(request: Request) {
   try {
     await ensureMasterUser();
-    const { username, password, displayName } = await request.json();
+    const { username, password, displayName, contactName } = await request.json();
 
-    if (!username || !password) {
-      return NextResponse.json({ error: '아이디와 비밀번호를 입력해 주세요.' }, { status: 400 });
+    if (!username || !password || !contactName) {
+      return NextResponse.json({ error: '아이디, 비밀번호, 담당자 이름을 입력해 주세요.' }, { status: 400 });
     }
 
     const supabase = getAdminClient();
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
       .insert({
         username,
         display_name: displayName || null,
+        contact_name: contactName || null,
         password_hash: passwordHash,
         role: 'general',
         approval_status: 'pending',

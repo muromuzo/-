@@ -14,7 +14,12 @@ const displayFont = Space_Grotesk({
   variable: '--font-display'
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://example.com';
+function normalizeSiteUrl(value?: string) {
+  if (!value) return 'https://example.com';
+  return value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
+}
+
+const siteUrl = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -45,13 +50,13 @@ export const metadata: Metadata = {
     siteName: 'POLABS ADMIN',
     locale: 'ko_KR',
     type: 'website',
-    images: [{ url: '/polabs-og.png', width: 512, height: 512, alt: 'POLABS 로고' }]
+    images: [{ url: '/polabs-og-card.png', width: 1200, height: 630, alt: 'POLABS ADMIN 공유 이미지' }]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'POLABS ADMIN',
     description: '피오랩스 어드민',
-    images: ['/polabs-og.png']
+    images: ['/polabs-og-card.png']
   }
 };
 

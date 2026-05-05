@@ -10,29 +10,35 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const currentUser = await getCurrentUser();
     if (!currentUser || currentUser.approval_status !== 'approved') return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     if (currentUser.role !== 'master') return NextResponse.json({ error: '마스터 권한이 필요합니다.' }, { status: 403 });
-    const { role, approval_status, manager_user_id } = await request.json();
+    const { role, approval_status, manager_user_id, contact_name } = await request.json();
     const { id } = await params;
-
-    if (!['pro', 'general'].includes(role)) {
-      return NextResponse.json({ error: '변경 가능한 권한은 pro 또는 general 입니다.' }, { status: 400 });
-    }
-    if (!['pending', 'approved', 'rejected'].includes(approval_status)) {
-      return NextResponse.json({ error: '승인 상태 값이 올바르지 않습니다.' }, { status: 400 });
-    }
 
     const supabase = getAdminClient();
     const { data: target } = await supabase.from('users').select('role').eq('id', id).maybeSingle();
-    if (target?.role === 'master') {
-      return NextResponse.json({ error: 'master 권한은 변경할 수 없습니다.' }, { status: 403 });
+    if (!target) {
+      return NextResponse.json({ error: '대상 계정을 찾을 수 없습니다.' }, { status: 404 });
+    }
+
+    const isMasterTarget = target.role === 'master';
+
+    if (!isMasterTarget && !['pro', 'general'].includes(role)) {
+      return NextResponse.json({ error: '변경 가능한 권한은 pro 또는 general 입니다.' }, { status: 400 });
+    }
+    if (!isMasterTarget && !['pending', 'approved', 'rejected'].includes(approval_status)) {
+      return NextResponse.json({ error: '승인 상태 값이 올바르지 않습니다.' }, { status: 400 });
     }
 
     const patch: Record<string, any> = {
-      role,
-      approval_status,
-      manager_user_id: role === 'general' ? manager_user_id || null : null,
-      approved_by: approval_status === 'approved' ? currentUser.id : null,
-      approved_at: approval_status === 'approved' ? new Date().toISOString() : null
+      contact_name: contact_name || null
     };
+
+    if (!isMasterTarget) {
+      patch.role = role;
+      patch.approval_status = approval_status;
+      patch.manager_user_id = role === 'general' ? manager_user_id || null : null;
+      patch.approved_by = approval_status === 'approved' ? currentUser.id : null;
+      patch.approved_at = approval_status === 'approved' ? new Date().toISOString() : null;
+    }
 
     const { error } = await supabase.from('users').update(patch).eq('id', id);
     if (error) {

@@ -4,6 +4,7 @@ alter table public.users add column if not exists approval_status text not null 
 alter table public.users add column if not exists manager_user_id uuid references public.users(id) on delete set null;
 alter table public.users add column if not exists approved_by uuid references public.users(id) on delete set null;
 alter table public.users add column if not exists approved_at timestamptz;
+alter table public.users add column if not exists contact_name text;
 
 alter table public.users drop constraint if exists users_role_check;
 alter table public.users add constraint users_role_check check (role in ('master', 'pro', 'general'));
@@ -16,6 +17,7 @@ update public.users set role = 'general' where role = 'user';
 update public.users set approval_status = 'approved' where approval_status is null;
 update public.users set approved_at = coalesce(approved_at, created_at) where approval_status = 'approved';
 update public.users set manager_user_id = null where role in ('master', 'pro');
+update public.users set contact_name = coalesce(contact_name, display_name, username) where contact_name is null;
 
 create table if not exists public.board_posts (
   id uuid primary key default gen_random_uuid(),

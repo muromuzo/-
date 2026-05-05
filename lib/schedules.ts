@@ -21,7 +21,7 @@ function enrichScheduleMemos(rawMemos: Array<{
     if (userIds.length) {
       const { data: users } = await supabase
         .from('users')
-        .select('id, username, display_name, role, approval_status, manager_user_id, approved_at, created_at')
+        .select('id, username, display_name, contact_name, role, approval_status, manager_user_id, approved_at, created_at')
         .in('id', userIds);
       for (const userRow of (users ?? []) as DashboardUser[]) {
         userMap.set(userRow.id, userRow);
@@ -30,8 +30,8 @@ function enrichScheduleMemos(rawMemos: Array<{
 
     return rawMemos.map((memo) => ({
       ...memo,
-      author_name: userMap.get(memo.created_by)?.display_name || userMap.get(memo.created_by)?.username || '알 수 없음',
-      owner_pro_name: userMap.get(memo.owner_pro_id)?.display_name || userMap.get(memo.owner_pro_id)?.username || '미지정'
+      author_name: userMap.get(memo.created_by)?.display_name || userMap.get(memo.created_by)?.contact_name || userMap.get(memo.created_by)?.username || '알 수 없음',
+      owner_pro_name: userMap.get(memo.owner_pro_id)?.display_name || userMap.get(memo.owner_pro_id)?.contact_name || userMap.get(memo.owner_pro_id)?.username || '미지정'
     } satisfies ScheduleMemo));
   };
 }

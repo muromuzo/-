@@ -5,6 +5,7 @@ export type DashboardUser = {
   id: string;
   username: string;
   display_name: string | null;
+  contact_name: string | null;
   role: UserRole;
   approval_status: ApprovalStatus;
   manager_user_id: string | null;
