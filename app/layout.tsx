@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { Noto_Sans_KR, Space_Grotesk } from 'next/font/google';
 import InteractiveEffects from '@/components/InteractiveEffects';
+import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
 
 const bodyFont = Noto_Sans_KR({
   subsets: ['latin'],
@@ -66,6 +67,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body className={`${bodyFont.variable} ${displayFont.variable}`}>
         <InteractiveEffects />
+        <GlobalLoadingOverlay />
         {children}
       </body>
     </html>
