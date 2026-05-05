@@ -5,6 +5,7 @@ import AppTabs from '@/components/AppTabs';
 import type { DashboardUser, ScheduleMemo } from '@/lib/types';
 
 const DEFAULT_CATEGORIES = ['운영', '광고', '콘텐츠', '정산'];
+const CUSTOM_OPTION = '__custom__';
 const todayMonth = new Date().toISOString().slice(0, 7);
 
 function teamOwnerDefault(user: DashboardUser) {
@@ -29,6 +30,9 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: { use
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const categoryOptions = useMemo(() => [...new Set([...DEFAULT_CATEGORIES, ...memos.map((memo) => memo.category).filter(Boolean), category].filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko')), [memos, category]);
+  const proNameMap = useMemo(() => new Map(proOptions.map((pro) => [pro.id, pro.display_name || pro.contact_name || pro.username])), [proOptions]);
+
   const visibleMemos = useMemo(() => {
     return memos.filter((memo) => {
       const matchesMonth = !monthFilter || memo.scheduled_date.startsWith(monthFilter);
@@ -43,9 +47,6 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: { use
       return matchesMonth && matchesCategory && matchesTeam;
     });
   }, [memos, monthFilter, categoryFilter, teamFilter, user.role]);
-
-  const categories = useMemo(() => ['전체', ...new Set([...DEFAULT_CATEGORIES, ...memos.map((memo) => memo.category).filter(Boolean)])], [memos]);
-  const categorySuggestions = useMemo(() => [...new Set([...DEFAULT_CATEGORIES, ...memos.map((memo) => memo.category).filter(Boolean), category])], [memos, category]);
 
   const groupedMemos = useMemo(() => {
     const map = new Map<string, ScheduleMemo[]>();
@@ -63,6 +64,11 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: { use
       }))
       .sort((a, b) => a.teamName.localeCompare(b.teamName, 'ko'));
   }, [visibleMemos]);
+
+  function getCategorySelectValue(value: string) {
+    if (!value) return '';
+    return categoryOptions.includes(value) ? value : CUSTOM_OPTION;
+  }
 
   function resetForm() {
     setEditingId(null);
@@ -149,13 +155,12 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: { use
     setMemos((prev) => prev.map((item) => (item.id === memo.id ? data.memo : item)));
   }
 
+  const categorySelectValue = getCategorySelectValue(category);
+  const selectedTeamName = ownerProId ? proNameMap.get(ownerProId) || '미지정 팀' : '미지정 팀';
+
   return (
     <div className="container">
-      <AppTabs user={user} active="schedule" description="팀 일정과 전체 공지를 한 번에 관리합니다. 카테고리는 직접 입력하면 새 항목으로 바로 저장되고, 마스터/프로는 전체 공지도 등록할 수 있습니다." />
-
-      <datalist id="schedule-category-options">
-        {categorySuggestions.map((item) => <option key={item} value={item} />)}
-      </datalist>
+      <AppTabs user={user} active="schedule" description="팀 일정과 전체 공지를 한 번에 관리합니다. 카테고리는 드랍다운에서 선택하거나 새 항목으로 바로 추가할 수 있습니다." />
 
       <div className="grid-2">
         <section className="panel">
@@ -167,27 +172,58 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: { use
             </div>
             <div className="field">
               <label>카테고리</label>
-              <input list="schedule-category-options" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="예: 운영 / 광고 / 콘텐츠" />
-              <div className="muted small">직접 입력하면 새 카테고리로 저장됩니다.</div>
+              <div className="select-chip-stack">
+                <select
+                  className="chip-select"
+                  value={categorySelectValue}
+                  onChange={(e) => {
+                    if (e.target.value === CUSTOM_OPTION) {
+                      setCategory('');
+                      return;
+                    }
+                    setCategory(e.target.value);
+                  }}
+                >
+                  <option value="">카테고리 선택</option>
+                  {categoryOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                  <option value={CUSTOM_OPTION}>+ 카테고리 직접 입력</option>
+                </select>
+                {(categorySelectValue === CUSTOM_OPTION || !category || !categoryOptions.includes(category)) && (
+                  <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="카테고리 직접 입력" />
+                )}
+                <div className="inline-chips">
+                  <span className={`badge ${category ? 'badge-blue' : 'badge-amber'}`}>{category || '미지정'}</span>
+                </div>
+              </div>
             </div>
             {canUseGlobal && (
               <div className="field">
                 <label>공지 범위</label>
-                <select value={audienceScope} onChange={(e) => setAudienceScope(e.target.value as 'team' | 'global')}>
-                  <option value="team">팀 공지</option>
-                  <option value="global">전체 공지</option>
-                </select>
+                <div className="select-chip-stack">
+                  <select className="chip-select" value={audienceScope} onChange={(e) => setAudienceScope(e.target.value as 'team' | 'global')}>
+                    <option value="team">팀 공지</option>
+                    <option value="global">전체 공지</option>
+                  </select>
+                  <div className="inline-chips">
+                    <span className={`badge ${audienceScope === 'global' ? 'badge-pink' : 'badge-amber'}`}>{audienceScope === 'global' ? '전체 공지' : '팀 공지'}</span>
+                  </div>
+                </div>
               </div>
             )}
             {user.role === 'master' && audienceScope === 'team' && (
               <div className="field">
                 <label>공유 대상 프로 팀</label>
-                <select value={ownerProId} onChange={(e) => setOwnerProId(e.target.value)}>
-                  <option value="">프로 팀 선택</option>
-                  {proOptions.map((pro) => (
-                    <option key={pro.id} value={pro.id}>{pro.display_name || pro.contact_name || pro.username}</option>
-                  ))}
-                </select>
+                <div className="select-chip-stack">
+                  <select className="chip-select" value={ownerProId} onChange={(e) => setOwnerProId(e.target.value)}>
+                    <option value="">프로 담당자 선택</option>
+                    {proOptions.map((pro) => (
+                      <option key={pro.id} value={pro.id}>{pro.display_name || pro.contact_name || pro.username}</option>
+                    ))}
+                  </select>
+                  <div className="inline-chips">
+                    <span className={`badge ${ownerProId ? 'badge-pink' : 'badge-amber'}`}>{selectedTeamName}</span>
+                  </div>
+                </div>
               </div>
             )}
             <div className="field field-full">
@@ -199,8 +235,6 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: { use
               <textarea value={note} onChange={(e) => setNote(e.target.value)} placeholder="예: 체크 포인트, 준비물, 공유할 이슈" />
             </div>
           </div>
-          {user.role === 'pro' && audienceScope === 'team' && <p className="desc" style={{ marginTop: 12 }}>프로 계정이 팀 공지를 등록하면 본인 팀 일정으로 자동 저장됩니다.</p>}
-          {user.role === 'general' && <p className="desc" style={{ marginTop: 12 }}>일반 계정은 본인 소속 프로 팀 일정만 등록할 수 있습니다.</p>}
           {error && <div style={{ marginTop: 12, color: 'var(--red)', fontWeight: 800 }}>{error}</div>}
           <div className="toolbar mt">
             <button className="btn btn-primary" onClick={handleSave} disabled={loading}>{loading ? '저장 중...' : editingId ? '수정 저장' : '일정 등록'}</button>
@@ -217,24 +251,36 @@ export default function ScheduleClient({ user, initialMemos, proOptions }: { use
             </div>
             <div className="field">
               <label>카테고리</label>
-              <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
-                {categories.map((item) => <option key={item} value={item}>{item}</option>)}
-              </select>
+              <div className="select-chip-stack">
+                <select className="chip-select" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
+                  <option value="전체">전체</option>
+                  {categoryOptions.map((item) => <option key={item} value={item}>{item}</option>)}
+                </select>
+                <div className="inline-chips">
+                  <span className={`badge ${categoryFilter === '전체' ? 'badge-amber' : 'badge-blue'}`}>{categoryFilter}</span>
+                </div>
+              </div>
             </div>
             {user.role === 'master' && (
               <div className="field">
                 <label>공유 범위 / 팀</label>
-                <select value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
-                  <option value="전체">전체</option>
-                  <option value="전체공지">전체 공지</option>
-                  {proOptions.map((pro) => (
-                    <option key={pro.id} value={pro.id}>{pro.display_name || pro.contact_name || pro.username}</option>
-                  ))}
-                </select>
+                <div className="select-chip-stack">
+                  <select className="chip-select" value={teamFilter} onChange={(e) => setTeamFilter(e.target.value)}>
+                    <option value="전체">전체</option>
+                    <option value="전체공지">전체 공지</option>
+                    {proOptions.map((pro) => (
+                      <option key={pro.id} value={pro.id}>{pro.display_name || pro.contact_name || pro.username}</option>
+                    ))}
+                  </select>
+                  <div className="inline-chips">
+                    <span className={`badge ${teamFilter === '전체공지' ? 'badge-pink' : teamFilter === '전체' ? 'badge-amber' : 'badge-blue'}`}>
+                      {teamFilter === '전체' ? '전체' : teamFilter === '전체공지' ? '전체 공지' : proNameMap.get(teamFilter) || '미지정 팀'}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
           </div>
-          <p className="desc" style={{ marginTop: 12 }}>체크 상태를 남기면 진행 여부를 바로 확인할 수 있고, 필터로 전체 공지와 팀 공지를 분리해서 볼 수 있습니다.</p>
         </section>
       </div>
 
