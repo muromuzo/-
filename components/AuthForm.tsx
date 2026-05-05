@@ -11,6 +11,7 @@ export default function AuthForm({ mode }: Props) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const isLogin = mode === 'login';
 
@@ -18,6 +19,7 @@ export default function AuthForm({ mode }: Props) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/signup';
       const res = await fetch(endpoint, {
@@ -27,7 +29,16 @@ export default function AuthForm({ mode }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || '처리 중 오류가 발생했습니다.');
-      window.location.href = '/dashboard';
+
+      if (isLogin) {
+        window.location.href = '/dashboard';
+        return;
+      }
+
+      setSuccess('가입 요청이 접수되었습니다. 마스터 승인 후 로그인할 수 있습니다.');
+      setUsername('');
+      setDisplayName('');
+      setPassword('');
     } catch (err) {
       setError(err instanceof Error ? err.message : '오류가 발생했습니다.');
     } finally {
@@ -39,18 +50,18 @@ export default function AuthForm({ mode }: Props) {
     <div className="auth-card">
       <div className="auth-brand">POLABS ADMIN</div>
       <div style={{ marginBottom: 18 }}>
-        <div className="title-lg" style={{ fontSize: 28 }}>{isLogin ? '로그인' : '회원가입'}</div>
+        <div className="title-lg" style={{ fontSize: 28 }}>{isLogin ? '승인 계정 로그인' : '가입 승인 요청'}</div>
         <div className="desc" style={{ marginTop: 8 }}>
           {isLogin
-            ? '회사 공용 리포트 템플릿에 로그인하세요. 최고 마스터 계정은 최초 접속 시 자동 생성됩니다.'
-            : '실무 담당자 계정을 생성하고 월별 보고를 관리할 수 있습니다.'}
+            ? '승인 완료된 계정만 로그인할 수 있습니다. 가입 후 마스터 승인 절차를 먼저 완료해 주세요.'
+            : '회원가입을 하면 기본적으로 일반 등급 대기 상태로 등록됩니다. 마스터가 승인하면 로그인할 수 있습니다.'}
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="field" style={{ marginBottom: 14 }}>
           <label>아이디</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="예: polabs" required />
+          <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="예: polabs-member" required />
         </div>
 
         {!isLogin && (
@@ -65,12 +76,11 @@ export default function AuthForm({ mode }: Props) {
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="비밀번호" required />
         </div>
 
-        {error && (
-          <div style={{ marginBottom: 12, color: 'var(--red)', fontWeight: 700 }}>{error}</div>
-        )}
+        {error && <div style={{ marginBottom: 12, color: 'var(--red)', fontWeight: 700 }}>{error}</div>}
+        {success && <div style={{ marginBottom: 12, color: 'var(--green)', fontWeight: 700 }}>{success}</div>}
 
         <button className="btn btn-primary" style={{ width: '100%' }} disabled={loading}>
-          {loading ? '처리 중...' : isLogin ? '로그인' : '회원가입'}
+          {loading ? '처리 중...' : isLogin ? '로그인' : '가입 요청 보내기'}
         </button>
       </form>
 

@@ -7,7 +7,7 @@ import { getAdminClient } from '@/lib/supabase';
 export const runtime = 'nodejs';
 
 async function canEditReport(userId: string, role: string, reportId: string) {
-  if (role === 'admin' || role === 'master') return true;
+  if (role === 'pro' || role === 'master') return true;
   const supabase = getAdminClient();
   const { data } = await supabase.from('monthly_reports').select('created_by').eq('id', reportId).maybeSingle();
   return data?.created_by === userId;

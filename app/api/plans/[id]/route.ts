@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 type PlanInput = { title?: string; note?: string };
 
 async function canEditPlan(userId: string, role: string, planId: string) {
-  if (role === 'admin' || role === 'master') return true;
+  if (role === 'pro' || role === 'master') return true;
   const supabase = getAdminClient();
   const { data } = await supabase.from('monthly_plan_pages').select('created_by').eq('id', planId).maybeSingle();
   return data?.created_by === userId;

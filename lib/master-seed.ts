@@ -13,7 +13,13 @@ export async function ensureMasterUser() {
     .eq('username', masterUsername)
     .maybeSingle();
 
-  if (existing?.id) return existing.id;
+  if (existing?.id) {
+    await supabase
+      .from('users')
+      .update({ role: 'master', approval_status: 'approved', manager_user_id: null })
+      .eq('id', existing.id);
+    return existing.id;
+  }
 
   const passwordHash = await hashPassword(masterPassword);
   const { data, error } = await supabase
@@ -22,7 +28,9 @@ export async function ensureMasterUser() {
       username: masterUsername,
       display_name: displayName,
       password_hash: passwordHash,
-      role: 'master'
+      role: 'master',
+      approval_status: 'approved',
+      approved_at: new Date().toISOString()
     })
     .select('id')
     .single();

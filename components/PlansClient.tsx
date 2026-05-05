@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import AppTabs from '@/components/AppTabs';
 import type { DashboardUser, MonthlyPlanRecord } from '@/lib/types';
 
 type PlanPair = { title: string; note: string };
@@ -94,24 +94,9 @@ export default function PlansClient({ user, initialPlans }: Props) {
     if (editingId === id) resetForm();
   }
 
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
-  }
-
   return (
     <div className="container">
-      <section className="hero hero-plan">
-        <h1>월별 마케팅 계획서</h1>
-        <p>월간 성과 보고서와 별도로 다음 달 실행 계획, 진행 예정 항목, 비고사항을 기록할 수 있는 관리 페이지입니다.</p>
-        <div className="toolbar mt">
-          <div className="badge badge-blue">로그인 사용자: {user.display_name || user.username}</div>
-          <div className="badge badge-amber">권한: {user.role}</div>
-          <Link className="btn btn-white" href="/dashboard">성과 대시보드</Link>
-          {(user.role === 'admin' || user.role === 'master') && <Link className="btn btn-white" href="/admin/users">회원 / 권한 관리</Link>}
-          <button className="btn btn-ghost" onClick={handleLogout}>로그아웃</button>
-        </div>
-      </section>
+      <AppTabs user={user} active="plans" description="브랜드별 월간 마케팅 계획, 실행 항목, 비고사항을 따로 기록하고 누적 관리합니다." />
 
       <div className="grid-2">
         <section className="panel">

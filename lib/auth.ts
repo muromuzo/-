@@ -68,7 +68,7 @@ export async function getCurrentUser(): Promise<DashboardUser | null> {
   const supabase = getAdminClient();
   const { data } = await supabase
     .from('users')
-    .select('id, username, display_name, role, created_at')
+    .select('id, username, display_name, role, approval_status, manager_user_id, approved_at, created_at')
     .eq('id', payload.userId)
     .maybeSingle();
   return (data as DashboardUser | null) ?? null;
@@ -77,11 +77,25 @@ export async function getCurrentUser(): Promise<DashboardUser | null> {
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
+  if (user.approval_status !== 'approved') {
+    await clearSessionCookie();
+    redirect('/login');
+  }
   return user;
 }
 
-export async function requireAdmin() {
+export async function requireManager() {
   const user = await requireUser();
-  if (user.role !== 'admin' && user.role !== 'master') redirect('/dashboard');
+  if (user.role !== 'pro' && user.role !== 'master') redirect('/dashboard');
   return user;
+}
+
+export async function requireMaster() {
+  const user = await requireUser();
+  if (user.role !== 'master') redirect('/dashboard');
+  return user;
+}
+
+export function isWriterRole(role: UserRole) {
+  return role === 'master' || role === 'pro';
 }

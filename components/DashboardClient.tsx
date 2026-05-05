@@ -2,13 +2,16 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import type { DashboardUser, ReportRecord } from '@/lib/types';
+import AppTabs from '@/components/AppTabs';
+import type { BoardPost, DashboardUser, ReportRecord, ScheduleMemo } from '@/lib/types';
 
 type Pair = { name: string; value: number };
 
 type Props = {
   user: DashboardUser;
   initialReports: ReportRecord[];
+  recentPosts: BoardPost[];
+  weeklySchedules: ScheduleMemo[];
 };
 
 const defaultMarketingItems: Pair[] = [
@@ -63,7 +66,11 @@ function normalizeChannelValues(list: Pair[], distributableTotal: number) {
   return { normalized, changed };
 }
 
-export default function DashboardClient({ user, initialReports }: Props) {
+function formatDate(date: string) {
+  return new Date(`${date}T00:00:00`).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+}
+
+export default function DashboardClient({ user, initialReports, recentPosts, weeklySchedules }: Props) {
   const [reports, setReports] = useState(initialReports);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [brandName, setBrandName] = useState('');
@@ -228,36 +235,53 @@ export default function DashboardClient({ user, initialReports }: Props) {
     if (editingId === id) resetForm();
   }
 
-  async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    window.location.href = '/login';
-  }
-
   return (
     <div className="container">
-      <section className="hero">
-        <h1>회사 공용 월별 성과 / 정산 템플릿</h1>
-        <p>
-          회원가입, 관리자 권한, 월별 입력, 마케팅비 자유 항목, 유입채널 매출, 수수료 자동 계산,
-          PDF 보고서 출력까지 한 번에 처리할 수 있는 템플릿입니다.
-        </p>
-        <div className="toolbar mt">
-          <div className="badge badge-blue">로그인 사용자: {user.display_name || user.username}</div>
-          <div className="badge badge-amber">권한: {user.role}</div>
-          <Link className="btn btn-white" href="/plans">월별 계획서</Link>
-          {(user.role === 'admin' || user.role === 'master') && (
-            <Link className="btn btn-white" href="/admin/users">회원 / 권한 관리</Link>
+      <AppTabs user={user} active="reports" description="성과보고서, 계획서, 사내 게시판, 팀 일정 메모를 POLABS ADMIN 탭 구조로 정리했습니다." />
+
+      <div className="overview-grid">
+        <section className="panel compact-panel">
+          <div className="section-title">
+            <h2>사내 게시판 최신 글</h2>
+            <Link className="btn btn-light" href="/board">게시판 열기</Link>
+          </div>
+          {!recentPosts.length ? <div className="empty small-empty">아직 게시글이 없습니다.</div> : (
+            <div className="simple-list">
+              {recentPosts.map((post) => (
+                <Link key={post.id} href="/board" className="simple-list-item">
+                  <strong>{post.title}</strong>
+                  <span>{post.author_name}</span>
+                </Link>
+              ))}
+            </div>
           )}
-          <button className="btn btn-ghost" onClick={handleLogout}>로그아웃</button>
-        </div>
-      </section>
+        </section>
+
+        <section className="panel compact-panel">
+          <div className="section-title">
+            <h2>이번 주 팀 일정 메모</h2>
+            <Link className="btn btn-light" href="/schedule">월간 일정 보기</Link>
+          </div>
+          {!weeklySchedules.length ? <div className="empty small-empty">이번 주에 등록된 일정이 없습니다.</div> : (
+            <div className="simple-list">
+              {weeklySchedules.map((memo) => (
+                <Link key={memo.id} href="/schedule" className="simple-list-item schedule-mini-item">
+                  <div>
+                    <strong>{memo.title}</strong>
+                    <span>{memo.category} · {memo.owner_pro_name}</span>
+                  </div>
+                  <span>{formatDate(memo.scheduled_date)}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
 
       <div className="grid-2">
         <section className="panel">
           <h2>{editingId ? '월별 데이터 수정' : '월별 데이터 입력'}</h2>
-          <p className="desc">
-            병원뿐 아니라 다른 업종에서도 사용할 수 있도록 브랜드명, 수수료율, 매출 제외금액, 마케팅비 항목명을 모두 자유롭게 입력할 수 있게 만들었습니다.
-          </p>
+          <p className="desc">브랜드명, 수수료율, 매출 제외금액, 마케팅비 항목명을 자유롭게 입력하고 성과보고서를 누적 관리합니다.</p>
 
           <div className="form-grid">
             <div className="field">
@@ -318,9 +342,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
             <h3>월 마케팅비 절감 내역</h3>
             <button className="btn btn-light" type="button" onClick={() => setSavingsItems([...savingsItems, { name: '', value: 0 }])}>항목 추가</button>
           </div>
-          <p className="desc" style={{ marginTop: -4, marginBottom: 10 }}>
-            우리를 통해 절감한 항목과 금액을 자유롭게 추가하세요. 입력한 내용은 PDF 보고서에도 자동 반영됩니다.
-          </p>
+          <p className="desc" style={{ marginTop: -4, marginBottom: 10 }}>우리를 통해 절감한 항목과 금액을 자유롭게 추가하세요. 입력한 내용은 PDF 보고서에도 자동 반영됩니다.</p>
           <div className="table-wrap">
             <table>
               <thead>
@@ -349,9 +371,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
                 <div className="meta-item"><span>현재 입력 합계</span><strong>{won(calculated.assignedChannelRevenue)}</strong></div>
                 <div className="meta-item"><span>남은 배분 가능 금액</span><strong>{won(calculated.remainingChannelRevenue)}</strong></div>
               </div>
-              <div className="muted small" style={{ marginTop: 10 }}>
-                위에서부터 순서대로 금액이 차감됩니다. 예를 들어 1번째 채널에 100만원을 입력하면 2번째 채널의 최대 입력 가능 금액은 자동으로 그만큼 줄어듭니다.
-              </div>
+              <div className="muted small" style={{ marginTop: 10 }}>위에서부터 순서대로 금액이 차감됩니다. 예를 들어 1번째 채널에 100만원을 입력하면 2번째 채널의 최대 입력 가능 금액은 자동으로 그만큼 줄어듭니다.</div>
             </div>
           </div>
           <div className="table-wrap">
@@ -367,17 +387,8 @@ export default function DashboardClient({ user, initialReports }: Props) {
                     <tr key={`c-${index}`}>
                       <td><input value={item.name} onChange={(e) => setChannels(updatePair(channels, index, 'name', e.target.value))} /></td>
                       <td>
-                        <input
-                          type="number"
-                          min={0}
-                          max={rowMax}
-                          value={item.value || ''}
-                          placeholder={`최대 ${rowMax.toLocaleString('ko-KR')}`}
-                          onChange={(e) => setChannels(updateChannelValue(index, e.target.value))}
-                        />
-                        <div className="muted small" style={{ marginTop: 6 }}>
-                          이 행 최대 입력 가능 금액: {won(rowMax)} / 입력 후 다음 채널에 남는 금액: {won(rowRemainingAfter)}
-                        </div>
+                        <input type="number" min={0} max={rowMax} value={item.value || ''} placeholder={`최대 ${rowMax.toLocaleString('ko-KR')}`} onChange={(e) => setChannels(updateChannelValue(index, e.target.value))} />
+                        <div className="muted small" style={{ marginTop: 6 }}>이 행 최대 입력 가능 금액: {won(rowMax)} / 입력 후 다음 채널에 남는 금액: {won(rowRemainingAfter)}</div>
                       </td>
                     </tr>
                   );

@@ -1,11 +1,20 @@
-export type UserRole = 'master' | 'admin' | 'user';
+export type UserRole = 'master' | 'pro' | 'general';
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 export type DashboardUser = {
   id: string;
   username: string;
   display_name: string | null;
   role: UserRole;
+  approval_status: ApprovalStatus;
+  manager_user_id: string | null;
+  approved_at: string | null;
   created_at: string;
+};
+
+export type ManagedUser = DashboardUser & {
+  manager_name?: string | null;
+  approved_by_name?: string | null;
 };
 
 export type MarketingItem = {
@@ -59,4 +68,28 @@ export type MonthlyPlanRecord = {
   created_by: string;
   created_at: string;
   plan_items: PlanItem[];
+};
+
+export type BoardPost = {
+  id: string;
+  title: string;
+  content: string;
+  created_by: string;
+  created_at: string;
+  author_name: string;
+  author_role: UserRole;
+};
+
+export type ScheduleMemo = {
+  id: string;
+  owner_pro_id: string;
+  scheduled_date: string;
+  category: string;
+  title: string;
+  note: string | null;
+  is_checked: boolean;
+  created_by: string;
+  created_at: string;
+  author_name: string;
+  owner_pro_name: string;
 };
