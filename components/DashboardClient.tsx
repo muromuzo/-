@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { DashboardUser, ReportRecord } from '@/lib/types';
 
@@ -46,6 +46,21 @@ function percent(value: number) {
 function toInputArray(items?: { name: string; value?: number; revenue?: number }[]) {
   if (!items?.length) return [] as Pair[];
   return items.map((item) => ({ name: item.name, value: Number(item.value ?? item.revenue ?? 0) }));
+}
+
+function normalizeChannelValues(list: Pair[], distributableTotal: number) {
+  let remaining = Math.max(0, distributableTotal);
+  let changed = false;
+
+  const normalized = list.map((item) => {
+    const safeValue = Math.max(0, Number(item.value) || 0);
+    const nextValue = Math.min(safeValue, remaining);
+    if (nextValue !== safeValue) changed = true;
+    remaining = Math.max(0, remaining - nextValue);
+    return { ...item, value: nextValue };
+  });
+
+  return { normalized, changed };
 }
 
 export default function DashboardClient({ user, initialReports }: Props) {
@@ -102,16 +117,30 @@ export default function DashboardClient({ user, initialReports }: Props) {
 
   function updateChannelValue(index: number, next: string) {
     const nextValue = Math.max(0, Number(next) || 0);
-    const otherSum = channels.reduce((sum, item, idx) => sum + (idx === index ? 0 : Number(item.value) || 0), 0);
-    const maxAllowed = Math.max(0, calculated.distributableChannelRevenue - otherSum);
-    const appliedValue = Math.min(nextValue, maxAllowed);
-    return updatePair(channels, index, 'value', String(appliedValue));
+    const copied = [...channels];
+    copied[index] = { ...copied[index], value: nextValue };
+    return normalizeChannelValues(copied, calculated.distributableChannelRevenue).normalized;
+  }
+
+  function getChannelUsedBefore(index: number) {
+    return channels.slice(0, index).reduce((sum, item) => sum + (Number(item.value) || 0), 0);
   }
 
   function getChannelRowMax(index: number) {
-    const otherSum = channels.reduce((sum, item, idx) => sum + (idx === index ? 0 : Number(item.value) || 0), 0);
-    return Math.max(0, calculated.distributableChannelRevenue - otherSum);
+    return Math.max(0, calculated.distributableChannelRevenue - getChannelUsedBefore(index));
   }
+
+  function getChannelRemainingAfter(index: number) {
+    const usedIncludingCurrent = channels.slice(0, index + 1).reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+    return Math.max(0, calculated.distributableChannelRevenue - usedIncludingCurrent);
+  }
+
+  useEffect(() => {
+    setChannels((prev) => {
+      const { normalized, changed } = normalizeChannelValues(prev, calculated.distributableChannelRevenue);
+      return changed ? normalized : prev;
+    });
+  }, [calculated.distributableChannelRevenue]);
 
   function resetForm() {
     setEditingId(null);
@@ -319,6 +348,9 @@ export default function DashboardClient({ user, initialReports }: Props) {
                 <div className="meta-item"><span>현재 입력 합계</span><strong>{won(calculated.assignedChannelRevenue)}</strong></div>
                 <div className="meta-item"><span>남은 배분 가능 금액</span><strong>{won(calculated.remainingChannelRevenue)}</strong></div>
               </div>
+              <div className="muted small" style={{ marginTop: 10 }}>
+                위에서부터 순서대로 금액이 차감됩니다. 예를 들어 1번째 채널에 100만원을 입력하면 2번째 채널의 최대 입력 가능 금액은 자동으로 그만큼 줄어듭니다.
+              </div>
             </div>
           </div>
           <div className="table-wrap">
@@ -329,6 +361,7 @@ export default function DashboardClient({ user, initialReports }: Props) {
               <tbody>
                 {channels.map((item, index) => {
                   const rowMax = getChannelRowMax(index);
+                  const rowRemainingAfter = getChannelRemainingAfter(index);
                   return (
                     <tr key={`c-${index}`}>
                       <td><input value={item.name} onChange={(e) => setChannels(updatePair(channels, index, 'name', e.target.value))} /></td>
@@ -341,7 +374,9 @@ export default function DashboardClient({ user, initialReports }: Props) {
                           placeholder={`최대 ${rowMax.toLocaleString('ko-KR')}`}
                           onChange={(e) => setChannels(updateChannelValue(index, e.target.value))}
                         />
-                        <div className="muted small" style={{ marginTop: 6 }}>이 행 최대 입력 가능 금액: {won(rowMax)}</div>
+                        <div className="muted small" style={{ marginTop: 6 }}>
+                          이 행 최대 입력 가능 금액: {won(rowMax)} / 입력 후 다음 채널에 남는 금액: {won(rowRemainingAfter)}
+                        </div>
                       </td>
                     </tr>
                   );
