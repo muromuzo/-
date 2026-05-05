@@ -1,30 +1,30 @@
 import DashboardClient from '@/components/DashboardClient';
 import { requireUser } from '@/lib/auth';
-import { ensureMasterUser } from '@/lib/master-seed';
 import { getBoardPosts } from '@/lib/boards';
-import { getPlans } from '@/lib/plans';
-import { getReports } from '@/lib/reports';
-import { getCurrentWeekMemos, getVisibleScheduleMemos } from '@/lib/schedules';
+import { ensureMasterUser } from '@/lib/master-seed';
+import { getRecentPlans } from '@/lib/plans';
+import { getRecentReports } from '@/lib/reports';
+import { getCurrentWeekVisibleScheduleMemos } from '@/lib/schedules';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   await ensureMasterUser();
   const user = await requireUser();
-  const [reports, plans, recentPosts, allSchedules] = await Promise.all([
-    getReports(),
-    getPlans(),
+  const [reports, plans, recentPosts, weeklySchedules] = await Promise.all([
+    getRecentReports(10),
+    getRecentPlans(10),
     getBoardPosts(5),
-    getVisibleScheduleMemos(user)
+    getCurrentWeekVisibleScheduleMemos(user)
   ]);
 
   return (
     <DashboardClient
       user={user}
-      recentReports={reports.slice(0, 10)}
-      recentPlans={plans.slice(0, 10)}
+      recentReports={reports}
+      recentPlans={plans}
       recentPosts={recentPosts}
-      weeklySchedules={getCurrentWeekMemos(allSchedules)}
+      weeklySchedules={weeklySchedules}
     />
   );
 }

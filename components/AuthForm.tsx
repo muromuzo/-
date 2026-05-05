@@ -50,12 +50,12 @@ export default function AuthForm({ mode }: Props) {
     <div className="auth-card">
       <div className="auth-brand">POLABS ADMIN</div>
       <div style={{ marginBottom: 18 }}>
-        <div className="title-lg" style={{ fontSize: 28 }}>{isLogin ? '승인 계정 로그인' : '가입 승인 요청'}</div>
-        <div className="desc" style={{ marginTop: 8 }}>
-          {isLogin
-            ? '승인 완료된 계정만 로그인할 수 있습니다. 가입 후 마스터 승인 절차를 먼저 완료해 주세요.'
-            : '회원가입을 하면 기본적으로 일반 등급 대기 상태로 등록됩니다. 마스터가 승인하면 로그인할 수 있습니다.'}
-        </div>
+        <div className="title-lg" style={{ fontSize: 28 }}>{isLogin ? '로그인' : '회원가입'}</div>
+        {!isLogin && (
+          <div className="desc" style={{ marginTop: 8 }}>
+            회원가입 후 마스터 승인 완료 시 로그인할 수 있습니다.
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit}>

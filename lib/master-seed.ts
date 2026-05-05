@@ -1,7 +1,14 @@
 import { getAdminClient } from './supabase';
 import { hashPassword } from './auth';
 
+let masterCheckCache: { userId: string; checkedAt: number } | null = null;
+const MASTER_CACHE_MS = 1000 * 60 * 10;
+
 export async function ensureMasterUser() {
+  if (masterCheckCache && Date.now() - masterCheckCache.checkedAt < MASTER_CACHE_MS) {
+    return masterCheckCache.userId;
+  }
+
   const supabase = getAdminClient();
   const masterUsername = process.env.MASTER_USERNAME || 'polabs';
   const masterPassword = process.env.MASTER_PASSWORD || 'vldhfoqtm1!';
@@ -9,15 +16,23 @@ export async function ensureMasterUser() {
 
   const { data: existing } = await supabase
     .from('users')
-    .select('id')
+    .select('id, role, approval_status, manager_user_id')
     .eq('username', masterUsername)
     .maybeSingle();
 
   if (existing?.id) {
-    await supabase
-      .from('users')
-      .update({ role: 'master', approval_status: 'approved', manager_user_id: null })
-      .eq('id', existing.id);
+    if (
+      existing.role !== 'master'
+      || existing.approval_status !== 'approved'
+      || existing.manager_user_id !== null
+    ) {
+      await supabase
+        .from('users')
+        .update({ role: 'master', approval_status: 'approved', manager_user_id: null })
+        .eq('id', existing.id);
+    }
+
+    masterCheckCache = { userId: existing.id, checkedAt: Date.now() };
     return existing.id;
   }
 
@@ -36,5 +51,6 @@ export async function ensureMasterUser() {
     .single();
 
   if (error) throw error;
+  masterCheckCache = { userId: data.id as string, checkedAt: Date.now() };
   return data.id as string;
 }
