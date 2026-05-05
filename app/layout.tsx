@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import { Noto_Sans_KR, Space_Grotesk } from 'next/font/google';
+import InteractiveEffects from '@/components/InteractiveEffects';
 
 const bodyFont = Noto_Sans_KR({
   subsets: ['latin'],
@@ -63,7 +64,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className={`${bodyFont.variable} ${displayFont.variable}`}>{children}</body>
+      <body className={`${bodyFont.variable} ${displayFont.variable}`}>
+        <InteractiveEffects />
+        {children}
+      </body>
     </html>
   );
 }
