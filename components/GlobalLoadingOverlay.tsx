@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 function isInternalLink(target: EventTarget | null) {
   if (!(target instanceof HTMLElement)) return false;
@@ -15,8 +15,7 @@ function isInternalLink(target: EventTarget | null) {
 
 export default function GlobalLoadingOverlay() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const routeKey = `${pathname}?${searchParams?.toString() || ''}`;
+  const routeKey = pathname || '';
   const [visible, setVisible] = useState(true);
   const initializedRef = useRef(false);
   const hideTimerRef = useRef<number | null>(null);

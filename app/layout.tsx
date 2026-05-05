@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { Noto_Sans_KR, Space_Grotesk } from 'next/font/google';
 import InteractiveEffects from '@/components/InteractiveEffects';
 import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay';
@@ -21,7 +22,10 @@ function normalizeSiteUrl(value?: string) {
   return value.startsWith('http://') || value.startsWith('https://') ? value : `https://${value}`;
 }
 
-const siteUrl = normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
+const siteUrl = normalizeSiteUrl(
+  process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL
+);
+const kakaoOgImagePath = '/polabs-kakao-og-v2.png';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -52,13 +56,13 @@ export const metadata: Metadata = {
     siteName: 'POLABS ADMIN',
     locale: 'ko_KR',
     type: 'website',
-    images: [{ url: '/polabs-og-card.png', width: 1200, height: 630, alt: 'POLABS ADMIN 공유 이미지' }]
+    images: [{ url: kakaoOgImagePath, width: 1200, height: 630, alt: 'POLABS ADMIN 공유 이미지' }]
   },
   twitter: {
     card: 'summary_large_image',
     title: 'POLABS ADMIN',
     description: '피오랩스 어드민',
-    images: ['/polabs-og-card.png']
+    images: [kakaoOgImagePath]
   }
 };
 
@@ -67,7 +71,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ko">
       <body className={`${bodyFont.variable} ${displayFont.variable}`}>
         <InteractiveEffects />
-        <GlobalLoadingOverlay />
+        <Suspense fallback={null}>
+          <GlobalLoadingOverlay />
+        </Suspense>
         {children}
       </body>
     </html>
