@@ -10,7 +10,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const currentUser = await getCurrentUser();
     if (!currentUser || currentUser.approval_status !== 'approved') return NextResponse.json({ error: '로그인이 필요합니다.' }, { status: 401 });
     if (currentUser.role !== 'master') return NextResponse.json({ error: '마스터 권한이 필요합니다.' }, { status: 403 });
-    const { role, approval_status, manager_user_id, contact_name } = await request.json();
+
+    const payload = await request.json();
+    const role = String(payload.role || 'general');
+    const approval_status = String(payload.approval_status || 'pending');
+    const manager_user_id = payload.manager_user_id ? String(payload.manager_user_id) : null;
+    const display_name = String(payload.display_name || '').trim();
+    const job_title = String(payload.job_title || '').trim();
     const { id } = await params;
 
     const supabase = getAdminClient();
@@ -29,13 +35,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     const patch: Record<string, any> = {
-      contact_name: contact_name || null
+      display_name: display_name || null,
+      contact_name: display_name || null,
+      job_title: job_title || null
     };
 
     if (!isMasterTarget) {
       patch.role = role;
       patch.approval_status = approval_status;
-      patch.manager_user_id = role === 'general' ? manager_user_id || null : null;
+      patch.manager_user_id = role === 'general' ? manager_user_id : null;
       patch.approved_by = approval_status === 'approved' ? currentUser.id : null;
       patch.approved_at = approval_status === 'approved' ? new Date().toISOString() : null;
     }

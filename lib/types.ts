@@ -6,6 +6,7 @@ export type DashboardUser = {
   username: string;
   display_name: string | null;
   contact_name: string | null;
+  job_title: string | null;
   role: UserRole;
   approval_status: ApprovalStatus;
   manager_user_id: string | null;
@@ -83,12 +84,13 @@ export type BoardPost = {
 
 export type ScheduleMemo = {
   id: string;
-  owner_pro_id: string;
+  owner_pro_id: string | null;
   scheduled_date: string;
   category: string;
   title: string;
   note: string | null;
   is_checked: boolean;
+  is_global: boolean;
   created_by: string;
   created_at: string;
   author_name: string;

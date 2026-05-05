@@ -5,6 +5,7 @@ create table if not exists public.users (
   username text not null unique,
   display_name text,
   contact_name text,
+  job_title text,
   password_hash text not null,
   role text not null default 'general' check (role in ('master', 'pro', 'general')),
   approval_status text not null default 'approved' check (approval_status in ('pending', 'approved', 'rejected')),
@@ -85,15 +86,17 @@ create table if not exists public.board_posts (
 
 create table if not exists public.team_schedule_memos (
   id uuid primary key default gen_random_uuid(),
-  owner_pro_id uuid not null references public.users(id) on delete cascade,
+  owner_pro_id uuid references public.users(id) on delete cascade,
   scheduled_date date not null,
   category text not null default '운영',
   title text not null,
   note text,
   is_checked boolean not null default false,
+  is_global boolean not null default false,
   created_by uuid not null references public.users(id) on delete cascade,
   created_at timestamptz not null default now()
 );
 
 create index if not exists idx_team_schedule_memos_owner_date on public.team_schedule_memos(owner_pro_id, scheduled_date);
+create index if not exists idx_team_schedule_memos_global_date on public.team_schedule_memos(is_global, scheduled_date);
 create index if not exists idx_board_posts_created_at on public.board_posts(created_at desc);

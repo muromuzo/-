@@ -136,6 +136,7 @@ button, input, textarea, select { font: inherit; }
 }
 .btn-primary { background: #0f172a; color: white; }
 .btn-white { background: white; color: var(--navy); }
+.home-link { white-space: nowrap; }
 .btn-light { background: #eff6ff; color: var(--blue); }
 .btn-danger { background: #fee2e2; color: var(--red); }
 .btn-ghost { background: transparent; color: white; border: 1px solid rgba(255,255,255,.18); }

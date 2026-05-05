@@ -1,9 +1,13 @@
 import { getAdminClient } from './supabase';
 import type { DashboardUser, ManagedUser } from './types';
 
+export function getUserLabel(user: Pick<DashboardUser, 'display_name' | 'contact_name' | 'username'> | null | undefined) {
+  return user?.display_name || user?.contact_name || user?.username || '알 수 없음';
+}
+
 function mapUsers(data: any[]): ManagedUser[] {
   const users = (data ?? []) as ManagedUser[];
-  const nameMap = new Map(users.map((user) => [user.id, user.display_name || user.contact_name || user.username]));
+  const nameMap = new Map(users.map((user) => [user.id, getUserLabel(user)]));
   return users.map((user) => ({
     ...user,
     manager_name: user.manager_user_id ? nameMap.get(user.manager_user_id) || null : null,
@@ -15,7 +19,7 @@ export async function getManagedUsers() {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('users')
-    .select('id, username, display_name, contact_name, role, approval_status, manager_user_id, approved_at, created_at, approved_by')
+    .select('id, username, display_name, contact_name, job_title, role, approval_status, manager_user_id, approved_at, created_at, approved_by')
     .order('created_at', { ascending: true });
 
   if (error) throw error;
@@ -26,7 +30,7 @@ export async function getApprovedPros() {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('users')
-    .select('id, username, display_name, contact_name, role, approval_status, manager_user_id, approved_at, created_at')
+    .select('id, username, display_name, contact_name, job_title, role, approval_status, manager_user_id, approved_at, created_at')
     .eq('role', 'pro')
     .eq('approval_status', 'approved')
     .order('created_at', { ascending: true });
@@ -41,7 +45,6 @@ export function getTeamOwnerId(user: DashboardUser) {
   return user.manager_user_id || null;
 }
 
-export function canManageUser(currentUser: DashboardUser, target: ManagedUser) {
-  if (currentUser.role === 'master') return true;
-  return false;
+export function canManageUser(currentUser: DashboardUser, _target: ManagedUser) {
+  return currentUser.role === 'master';
 }

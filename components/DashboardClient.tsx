@@ -29,7 +29,7 @@ export default function DashboardClient({ user, recentReports, recentPlans, rece
   const groupedWeeklySchedules = useMemo(() => {
     const map = new Map<string, ScheduleMemo[]>();
     weeklySchedules.forEach((memo) => {
-      const key = memo.owner_pro_name || '미지정 팀';
+      const key = memo.is_global ? '전체 공지' : memo.owner_pro_name || '미지정 팀';
       const bucket = map.get(key) || [];
       bucket.push(memo);
       map.set(key, bucket);
@@ -75,7 +75,7 @@ export default function DashboardClient({ user, recentReports, recentPlans, rece
         <div className="mini-stat">
           <div className="mini-stat-label">이번 주 팀 일정</div>
           <div className="mini-stat-value pink">{weeklyTotal}건</div>
-          <p>마스터는 프로별로, 프로·일반은 자신의 팀 기준으로 주간 메모를 봅니다.</p>
+          <p>마스터는 프로별 일정과 전체 공지를 함께 보고, 프로·일반은 소속 팀 일정과 전체 공지를 함께 확인합니다.</p>
         </div>
       </section>
 

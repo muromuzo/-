@@ -49,6 +49,9 @@ export default function AppTabs({ user, active, description }: Props) {
           <p>{description}</p>
         </div>
         <div className="toolbar">
+          <a className="btn btn-white home-link" href="https://polabs.co.kr" target="_blank" rel="noreferrer">
+            🏠 회사홈페이지
+          </a>
           <div className="badge badge-blue">사용자: {user.display_name || user.username}</div>
           <div className="badge badge-amber">권한: {roleLabel[user.role]}</div>
           <button className="btn btn-ghost" onClick={handleLogout}>로그아웃</button>
